@@ -6,15 +6,15 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 
 describe("EXAToken Basic Tests", function () {
-  // 컨트랙트 배포 fixture
+  // Contract deployment fixture
   async function deployTokenFixture() {
-    // 계정 얻기
+    // Get the accounts
     const [owner, addr1, addr2] = await ethers.getSigners();
 
-    // EXAToken 컨트랙트 팩토리 얻기
+    // Get the EXAToken contract factory
     const EXAToken = await ethers.getContractFactory("EXAToken");
     
-    // EXAToken 배포
+    // Deploy EXAToken
     const exa = await EXAToken.deploy();
     const deployedAddress = await exa.getAddress();
 
@@ -44,7 +44,7 @@ describe("EXAToken Basic Tests", function () {
       const { exa } = await loadFixture(deployTokenFixture);
       const totalSupply = await exa.totalSupply();
       
-      // 기대값: 10억 * 10^18
+      // Expected value: 1 billion * 10^18
       const expectedSupply = ethers.parseUnits("1000000000", 18);
       
       expect(totalSupply).to.equal(expectedSupply);
@@ -63,14 +63,14 @@ describe("EXAToken Basic Tests", function () {
     it("transfer() - Should be able to transfer tokens between accounts", async function() {
       const { exa, owner, addr1, addr2 } = await loadFixture(deployTokenFixture);
       
-      // 전송할 금액 (100 EXA)
+      // Amount to transfer (100 EXA)
       const transferAmount = ethers.parseUnits("100", 18);
       
-      // 전송 전 잔액 확인
+      // Check balances before transfer
       const ownerBalanceBefore = await exa.balanceOf(owner.address);
       const addr1BalanceBefore = await exa.balanceOf(addr1.address);
       
-      // owner에서 addr1로 토큰 전송
+      // Transfer tokens from owner to addr1
       await expect(
         exa.transfer(addr1.address, transferAmount)
       ).to.changeTokenBalances(
@@ -79,11 +79,11 @@ describe("EXAToken Basic Tests", function () {
         [transferAmount * BigInt(-1), transferAmount]
       );
       
-      // 전송 후 잔액 확인
+      // Check balances after transfer
       const ownerBalanceAfter = await exa.balanceOf(owner.address);
       const addr1BalanceAfter = await exa.balanceOf(addr1.address);
       
-      // 또 다른 계정으로 전송
+      // Transfer to another account
       await expect(
         exa.connect(addr1).transfer(addr2.address, transferAmount)
       ).to.changeTokenBalances(
@@ -98,10 +98,10 @@ describe("EXAToken Basic Tests", function () {
     it("transfer() - Should emit Transfer event when transferring tokens", async function() {
       const { exa, owner, addr1 } = await loadFixture(deployTokenFixture);
       
-      // 전송할 금액 (50 EXA)
+      // Amount to transfer (50 EXA)
       const transferAmount = ethers.parseUnits("50", 18);
       
-      // Transfer 이벤트 발생 확인
+      // Check that a Transfer event is emitted
       await expect(exa.transfer(addr1.address, transferAmount))
         .to.emit(exa, "Transfer")
         .withArgs(owner.address, addr1.address, transferAmount);
@@ -110,16 +110,16 @@ describe("EXAToken Basic Tests", function () {
     it("transferFrom() - Should emit Transfer event when transferring tokens", async function() {
       const { exa, owner, addr1, addr2 } = await loadFixture(deployTokenFixture);
       
-      // 승인할 금액 (100 EXA)
+      // Amount to approve (100 EXA)
       const approveAmount = ethers.parseUnits("100", 18);
       
-      // addr1에게 owner 토큰 전송 권한 부여
+      // Grant addr1 permission to transfer owner's tokens
       await exa.approve(addr1.address, approveAmount);
       
-      // 전송할 금액 (75 EXA)
+      // Amount to transfer (75 EXA)
       const transferAmount = ethers.parseUnits("75", 18);
       
-      // Transfer 이벤트 발생 확인
+      // Check that a Transfer event is emitted
       await expect(exa.connect(addr1).transferFrom(owner.address, addr2.address, transferAmount))
         .to.emit(exa, "Transfer")
         .withArgs(owner.address, addr2.address, transferAmount);
@@ -128,10 +128,10 @@ describe("EXAToken Basic Tests", function () {
     it("approve() - Should emit Approval event when approving", async function() {
       const { exa, owner, addr1 } = await loadFixture(deployTokenFixture);
       
-      // 승인할 금액 (50 EXA)
+      // Amount to approve (50 EXA)
       const approveAmount = ethers.parseUnits("50", 18);
       
-      // Approval 이벤트 발생 확인
+      // Check that an Approval event is emitted
       await expect(exa.approve(addr1.address, approveAmount))
         .to.emit(exa, "Approval")
         .withArgs(owner.address, addr1.address, approveAmount);
@@ -140,13 +140,13 @@ describe("EXAToken Basic Tests", function () {
     it("transfer() - Should fail when insufficient balance", async function() {
       const { exa, owner, addr1 } = await loadFixture(deployTokenFixture);
       
-      // addr1의 초기 잔액 (0 EXA)
+      // addr1's initial balance (0 EXA)
       const addr1Balance = await exa.balanceOf(addr1.address);
       
-      // 잔액보다 많은 금액 전송 시도 (1 EXA)
+      // Attempt to transfer more than the balance (1 EXA)
       const transferAmount = ethers.parseUnits("1", 18);
       
-      // 전송이 실패해야 함
+      // The transfer should fail
       await expect(
         exa.connect(addr1).transfer(owner.address, transferAmount)
       ).to.be.revertedWith("Insufficient balance");
@@ -155,20 +155,20 @@ describe("EXAToken Basic Tests", function () {
     it("transferFrom() - Should allow another account to transfer on behalf after approval", async function() {
       const { exa, owner, addr1, addr2 } = await loadFixture(deployTokenFixture);
       
-      // 승인할 금액 (200 EXA)
+      // Amount to approve (200 EXA)
       const approveAmount = ethers.parseUnits("200", 18);
       
-      // addr1에게 owner 토큰 전송 권한 부여
+      // Grant addr1 permission to transfer owner's tokens
       await exa.approve(addr1.address, approveAmount);
       
-      // 권한 확인
+      // Check allowance
       const allowance = await exa.allowance(owner.address, addr1.address);
       expect(allowance).to.equal(approveAmount);
       
-      // 전송할 금액 (150 EXA)
+      // Amount to transfer (150 EXA)
       const transferAmount = ethers.parseUnits("150", 18);
       
-      // addr1이 owner의 토큰을 addr2에게 전송
+      // addr1 transfers owner's tokens to addr2
       await expect(
         exa.connect(addr1).transferFrom(owner.address, addr2.address, transferAmount)
       ).to.changeTokenBalances(
@@ -177,29 +177,29 @@ describe("EXAToken Basic Tests", function () {
         [transferAmount * BigInt(-1), transferAmount]
       );
       
-      // 잔여 권한 확인
+      // Check remaining allowance
       const remainingAllowance = await exa.allowance(owner.address, addr1.address);
       expect(remainingAllowance).to.equal(approveAmount - transferAmount);
       
-      // addr2 잔액 확인
+      // Check addr2's balance
       const addr2Balance = await exa.balanceOf(addr2.address);
     });
     
     it("increaseAllowance() - Should verify allowance increase functionality", async function() {
       const { exa, owner, addr1 } = await loadFixture(deployTokenFixture);
       
-      // 초기 승인 금액 (100 EXA)
+      // Initial approval amount (100 EXA)
       const initialApproval = ethers.parseUnits("100", 18);
       await exa.approve(addr1.address, initialApproval);
       
-      // 초기 권한 확인
+      // Check initial allowance
       const initialAllowance = await exa.allowance(owner.address, addr1.address);
       
-      // 권한 증가 (50 EXA 추가)
+      // Increase allowance by 50 EXA
       const increaseAmount = ethers.parseUnits("50", 18);
       await exa.increaseAllowance(addr1.address, increaseAmount);
       
-      // 증가된 권한 확인
+      // Check updated allowance
       const newAllowance = await exa.allowance(owner.address, addr1.address);
       
       expect(newAllowance).to.equal(initialAllowance + increaseAmount);
@@ -208,99 +208,99 @@ describe("EXAToken Basic Tests", function () {
     it("decreaseAllowance() - Should verify allowance decrease functionality", async function() {
       const { exa, owner, addr1 } = await loadFixture(deployTokenFixture);
       
-      // 초기 승인 금액 (200 EXA)
+      // Initial approval amount (200 EXA)
       const initialApproval = ethers.parseUnits("200", 18);
       await exa.approve(addr1.address, initialApproval);
       
-      // 초기 권한 확인
+      // Check initial allowance
       const initialAllowance = await exa.allowance(owner.address, addr1.address);
       
-      // 권한 감소 (80 EXA 감소)
+      // Decrease allowance by 80 EXA
       const decreaseAmount = ethers.parseUnits("80", 18);
       await exa.decreaseAllowance(addr1.address, decreaseAmount);
       
-      // 감소된 권한 확인
+      // Check updated allowance
       const newAllowance = await exa.allowance(owner.address, addr1.address);
       
       expect(newAllowance).to.equal(initialAllowance - decreaseAmount);
     });
   });
 
-  // 락업 기능 테스트 추가
+  // Add lockup functionality tests
   describe("Lockup Functionality Tests", function() {
     it("lock() - Should deduct tokens from balance and properly set lockup state", async function() {
       const { exa, owner, addr1, addr2 } = await loadFixture(deployTokenFixture);
       
-      // 먼저 addr1에게 토큰 전송
+      // First transfer tokens to addr1
       const transferAmount = ethers.parseUnits("1000", 18);
       await exa.transfer(addr1.address, transferAmount);
       
-      // 락업 전 잔액 확인
+      // Check balance before lockup
       const initialBalance = await exa.balanceOf(addr1.address);
       
-      // 현재 시간 가져오기
+      // Get the current timestamp
       const blockNumBefore = await ethers.provider.getBlockNumber();
       const blockBefore = await ethers.provider.getBlock(blockNumBefore);
       const currentTimestamp = blockBefore!.timestamp;
       
-      // 락업 설정 (5분 후 해제 시작, 1분 간격으로 10%씩 해제)
+      // Set lockup (start unlocking after 5 minutes, 10% every 1 minute)
       const lockupAmount = ethers.parseUnits("100", 18);
-      const releaseStart = currentTimestamp + 300; // 현재 + 5분
-      const termOfRound = 60; // 1분 (60초)
-      const releaseRate = 10; // 10% 비율로 해제
+      const releaseStart = currentTimestamp + 300; // current + 5 minutes
+      const termOfRound = 60; // 1 minute (60 seconds)
+      const releaseRate = 10; // 10% each round
       
-      // 락업 실행 및 이벤트 확인
+      // Execute lockup and check the event
       await expect(exa.lock(addr1.address, lockupAmount, releaseStart, termOfRound, releaseRate))
         .to.emit(exa, "Lock")
         .withArgs(addr1.address, lockupAmount);
       
-      // 락업 후 잔액 확인 - balanceOf는 lockupInfo의 값을 포함하므로 락업 전과 같아야 함
+      // Check balance after lockup - balanceOf includes lockupInfo, so it should remain the same as before
       const balanceAfterLock = await exa.balanceOf(addr1.address);
       expect(balanceAfterLock).to.equal(initialBalance);
       
-      // 락업 상태 확인
+      // Check lockup state
       const lockState = await exa.showLockState(addr1.address, 0);
       
-      // 검증
-      expect(lockState[0]).to.be.true; // 락업 상태가 true여야 함
-      expect(lockState[1]).to.equal(1n); // 락업 개수가 1개여야 함
-      expect(lockState[2]).to.equal(lockupAmount); // 락업된 금액이 맞아야 함
-      expect(lockState[3]).to.equal(BigInt(releaseStart)); // 해제 시작 시간이 맞아야 함
-      expect(lockState[4]).to.equal(BigInt(termOfRound)); // 라운드 간격이 맞아야 함
-      expect(lockState[5]).to.equal(lockupAmount * BigInt(releaseRate) / 100n); // 라운드당 해제량이 맞아야 함 (10%)
+      // Verify
+      expect(lockState[0]).to.be.true; // Lockup state should be true
+      expect(lockState[1]).to.equal(1n); // The number of locks should be 1
+      expect(lockState[2]).to.equal(lockupAmount); // The locked amount should be correct
+      expect(lockState[3]).to.equal(BigInt(releaseStart)); // The start time of release should be correct
+      expect(lockState[4]).to.equal(BigInt(termOfRound)); // The interval per round should be correct
+      expect(lockState[5]).to.equal(lockupAmount * BigInt(releaseRate) / 100n); // The amount released each round should be correct (10%)
     });
     
     it("lock() - Should prevent transferring locked tokens before release time", async function() {
       const { exa, owner, addr1, addr2 } = await loadFixture(deployTokenFixture);
       
-      // addr1에게 토큰 전송
+      // Transfer tokens to addr1
       const transferAmount = ethers.parseUnits("1000", 18);
       await exa.transfer(addr1.address, transferAmount);
       
-      // 현재 시간 가져오기
+      // Get the current timestamp
       const blockNumBefore = await ethers.provider.getBlockNumber();
       const blockBefore = await ethers.provider.getBlock(blockNumBefore);
       const currentTimestamp = blockBefore!.timestamp;
       
-      // 락업 설정 (5분 후 해제 시작, 1분 간격으로 10%씩 해제)
+      // Set lockup (start unlocking after 5 minutes, 10% every 1 minute)
       const lockupAmount = ethers.parseUnits("500", 18);
-      const releaseStart = currentTimestamp + 300; // 현재 + 5분
-      const termOfRound = 60; // 1분 (60초)
-      const releaseRate = 10; // 10% 비율로 해제
+      const releaseStart = currentTimestamp + 300; // current + 5 minutes
+      const termOfRound = 60; // 1 minute (60 seconds)
+      const releaseRate = 10; // 10% each round
       
-      // 락업 실행
+      // Execute lockup
       await exa.lock(addr1.address, lockupAmount, releaseStart, termOfRound, releaseRate);
       
-      // 잔액 확인
+      // Check balance
       const availableBalance = await exa.balanceOf(addr1.address);
       
-      // 사용 가능한 잔액(500 EXA)보다 많은 양(600 EXA) 전송 시도 - 실패해야 함
+      // Attempt to transfer 600 EXA which is more than available 500 EXA - should fail
       const tooMuchAmount = ethers.parseUnits("600", 18);
       await expect(
         exa.connect(addr1).transfer(addr2.address, tooMuchAmount)
       ).to.be.revertedWith("Insufficient balance");
       
-      // 사용 가능한 잔액(500 EXA) 이내의 양(400 EXA) 전송 시도 - 성공해야 함
+      // Attempt to transfer 400 EXA which is within the available 500 EXA - should succeed
       const transferPossibleAmount = ethers.parseUnits("400", 18);
       await expect(
         exa.connect(addr1).transfer(addr2.address, transferPossibleAmount)
@@ -310,7 +310,7 @@ describe("EXAToken Basic Tests", function () {
         [transferPossibleAmount * BigInt(-1), transferPossibleAmount]
       );
       
-      // 남은 잔액 확인
+      // Check the remaining balance
       const remainingBalance = await exa.balanceOf(addr1.address);
       expect(remainingBalance).to.equal(availableBalance - transferPossibleAmount);
     });
@@ -318,119 +318,119 @@ describe("EXAToken Basic Tests", function () {
     it("autoUnlock() - Should automatically unlock tokens when the release time has passed", async function() {
       const { exa, owner, addr1, addr2 } = await loadFixture(deployTokenFixture);
       
-      // addr1에게 토큰 전송
+      // Transfer tokens to addr1
       const transferAmount = ethers.parseUnits("1000", 18);
       await exa.transfer(addr1.address, transferAmount);
       
-      // 현재 시간 가져오기
+      // Get the current timestamp
       const blockNumBefore = await ethers.provider.getBlockNumber();
       const blockBefore = await ethers.provider.getBlock(blockNumBefore);
       const currentTimestamp = blockBefore!.timestamp;
       
-      // 락업 설정 (30초 후 해제 시작, 10초 간격으로 10%씩 해제)
+      // Set lockup (start unlocking after 30 seconds, 10% every 10 seconds)
       const lockupAmount = ethers.parseUnits("100", 18);
-      const releaseStart = currentTimestamp + 30; // 현재 + 30초
-      const termOfRound = 10; // 10초 간격
-      const releaseRate = 10; // 10% 비율로 해제
+      const releaseStart = currentTimestamp + 30; // current + 30 seconds
+      const termOfRound = 10; // 10 seconds
+      const releaseRate = 10; // 10% each round
       
-      // 락업 실행
+      // Execute lockup
       await exa.lock(addr1.address, lockupAmount, releaseStart, termOfRound, releaseRate);
       
-      // 락업 후 잔액 확인 - balanceOf는 lockupInfo의 값을 포함하므로 변동 없음
+      // Check balance after lockup - balanceOf includes lockupInfo, so it doesn't change
       const balanceAfterLock = await exa.balanceOf(addr1.address);
       expect(balanceAfterLock).to.equal(transferAmount);
       
-      // 해제 시작 시간으로 시간 이동 (30초 후)
+      // Move forward in time to start release (30 seconds later)
       await time.increaseTo(releaseStart);
       
-      // 첫 라운드 해제 확인 (10% 해제)
-      // 전송 시도하여 autoUnlock 트리거
+      // Check the first round release (10% unlocked)
+      // Trigger autoUnlock by attempting a transfer
       const smallTransfer = ethers.parseUnits("1", 18);
       await exa.connect(addr1).transfer(addr2.address, smallTransfer);
       
-      // 해제 후 잔액 확인 - 전송한 smallTransfer만큼 감소해야 함
+      // Check balance after unlock - it should decrease by the smallTransfer amount
       const balanceAfterFirstRelease = await exa.balanceOf(addr1.address);
       
-      // 기대값: 최초 잔액(1000 EXA) - 전송(1 EXA) = 999 EXA
+      // Expected: initial 1000 EXA - 1 EXA = 999 EXA
       const expectedFirstRelease = transferAmount - smallTransfer;
       expect(balanceAfterFirstRelease).to.equal(expectedFirstRelease);
       
-      // 추가로 3 라운드 후의 시간으로 이동 (30초 + 10초*3 = 60초 후)
+      // Move forward to 3 more rounds (30 sec + 10 sec * 3 = 60 sec later)
       await time.increaseTo(releaseStart + 3 * termOfRound);
       
-      // 전송 시도하여 autoUnlock 트리거
+      // Trigger autoUnlock by attempting a transfer
       await exa.connect(addr1).transfer(addr2.address, smallTransfer);
       
-      // 4 라운드 시작 시간에 잔액 확인
+      // Check balance at the start of the 4th round
       const balanceAfterFourthRound = await exa.balanceOf(addr1.address);
       
-      // 기대값: 이전 잔액(999 EXA) - 전송(1 EXA) = 998 EXA
+      // Expected: previous 999 EXA - 1 EXA = 998 EXA
       const expectedFourthRound = balanceAfterFirstRelease - smallTransfer;
       expect(balanceAfterFourthRound).to.equal(expectedFourthRound);
       
-      // 모든 락업이 해제되는 시간으로 이동 (30초 + 10초*9 = 120초 후)
+      // Move forward to the time when all locks are unlocked (30 sec + 10 sec*9 = 120 sec later)
       await time.increaseTo(releaseStart + 9 * termOfRound);
       
-      // 전송 시도하여 autoUnlock 트리거
+      // Trigger autoUnlock by attempting a transfer
       await exa.connect(addr1).transfer(addr2.address, smallTransfer);
       
-      // 모든 락업 해제 후 잔액 확인
+      // Check the balance after all locks are released
       const balanceAfterFullRelease = await exa.balanceOf(addr1.address);
       
-      // 기대값: 이전 잔액(998 EXA) - 전송(1 EXA) = 997 EXA
+      // Expected: previous 998 EXA - 1 EXA = 997 EXA
       const expectedFullRelease = balanceAfterFourthRound - smallTransfer;
       expect(balanceAfterFullRelease).to.equal(expectedFullRelease);
       
-      // 락업 상태 확인 (락업이 모두 해제되었으므로 false여야 함)
+      // Check lockup state (it should be false since all locks are released)
       const lockStateAfterFullRelease = await exa.showLockState(addr1.address, 0);
       
-      // 모든 락업이 해제되었으므로 isLocked가 false여야 함
+      // Since all locks are released, isLocked should be false
       expect(lockStateAfterFullRelease[0]).to.be.false;
     });
     
     it("distributeWithLockup() - Should distribute and lock tokens in a single transaction", async function() {
       const { exa, owner, addr1, addr2 } = await loadFixture(deployTokenFixture);
       
-      // 현재 시간 가져오기
+      // Get the current timestamp
       const blockNumBefore = await ethers.provider.getBlockNumber();
       const blockBefore = await ethers.provider.getBlock(blockNumBefore);
       const currentTimestamp = blockBefore!.timestamp;
       
-      // 배포 및 락업 설정
+      // Set up distribution and lockup
       const distributeAmount = ethers.parseUnits("200", 18);
-      const releaseStart = currentTimestamp + 60; // 현재 + 1분
-      const termOfRound = 20; // 20초 간격
-      const releaseRate = 20; // 20% 비율로 해제
+      const releaseStart = currentTimestamp + 60; // current + 1 minute
+      const termOfRound = 20; // 20 seconds
+      const releaseRate = 20; // 20% each round
       
-      // 배포 전 잔액 확인
+      // Check balance before distribution
       const balanceBefore = await exa.balanceOf(addr1.address);
       
-      // 배포 및 락업 실행
+      // Execute distribution with lockup
       await exa.distributeWithLockup(addr1.address, distributeAmount, releaseStart, termOfRound, releaseRate);
       
-      // 배포 후 잔액 확인
+      // Check balance after distribution
       const balanceAfter = await exa.balanceOf(addr1.address);
       
-      // 락업 상태 확인
+      // Check lockup state
       const lockState = await exa.showLockState(addr1.address, 0);
       
-      // 검증
-      expect(lockState[0]).to.be.true; // 락업 상태가 true여야 함
-      expect(lockState[2]).to.equal(distributeAmount); // 락업된 금액이 맞아야 함
+      // Verify
+      expect(lockState[0]).to.be.true; // Lockup state should be true
+      expect(lockState[2]).to.equal(distributeAmount); // The locked amount should be correct
       
-      // 해제 시간 이전에는 토큰 전송이 불가능해야 함
+      // Token transfers should be disallowed before the release time
       const transferAmount = ethers.parseUnits("10", 18);
       await expect(
         exa.connect(addr1).transfer(addr2.address, transferAmount)
       ).to.be.revertedWith("Insufficient balance");
       
-      // 해제 시간 이후로 이동
+      // Move time past the release time
       await time.increaseTo(releaseStart + termOfRound);
       
-      // 해제된 양(20%) 이내에서 전송 시도
+      // Attempt to transfer within the released amount (20%)
       const releasedAmount = distributeAmount * BigInt(releaseRate) / 100n;
       
-      // 해제된 양보다 작은 금액 전송 - 성공해야 함
+      // Transfer less than the released amount - should succeed
       const smallerAmount = releasedAmount - ethers.parseUnits("1", 18);
       await expect(
         exa.connect(addr1).transfer(addr2.address, smallerAmount)
@@ -444,45 +444,45 @@ describe("EXAToken Basic Tests", function () {
     it("unlock() - Should allow admin to manually unlock token lockups", async function() {
       const { exa, owner, addr1, addr2 } = await loadFixture(deployTokenFixture);
       
-      // addr1에게 토큰 전송
+      // Transfer tokens to addr1
       const transferAmount = ethers.parseUnits("1000", 18);
       await exa.transfer(addr1.address, transferAmount);
       
-      // 현재 시간 가져오기
+      // Get the current timestamp
       const blockNumBefore = await ethers.provider.getBlockNumber();
       const blockBefore = await ethers.provider.getBlock(blockNumBefore);
       const currentTimestamp = blockBefore!.timestamp;
       
-      // 락업 설정 (5분 후 해제 시작)
+      // Set lockup (start unlocking after 5 minutes)
       const lockupAmount = ethers.parseUnits("500", 18);
-      const releaseStart = currentTimestamp + 300; // 현재 + 5분
-      const termOfRound = 60; // 1분 간격
-      const releaseRate = 10; // 10% 비율로 해제
+      const releaseStart = currentTimestamp + 300; // current + 5 minutes
+      const termOfRound = 60; // 1 minute intervals
+      const releaseRate = 10; // 10% each round
       
-      // 락업 실행
+      // Execute lockup
       await exa.lock(addr1.address, lockupAmount, releaseStart, termOfRound, releaseRate);
       
-      // 락업 직후 총 잔액 확인 - balanceOf는 lockupInfo의 값을 포함하므로 변동 없음
+      // Check the total balance right after lockup - balanceOf includes lockupInfo, so it doesn't change
       const balanceAfterLock = await exa.balanceOf(addr1.address);
       expect(balanceAfterLock).to.equal(transferAmount);
       
-      // 락업 상태 확인
+      // Check lockup state
       const lockStateBefore = await exa.showLockState(addr1.address, 0);
       
-      // 관리자가 수동으로 락업 해제
+      // Admin manually unlocks
       await expect(exa.unlock(addr1.address, 0))
         .to.emit(exa, "Unlock")
         .withArgs(addr1.address, lockupAmount);
       
-      // 수동 해제 후 잔액 확인 - 변동 없음
+      // Check balance after manual unlock - no change
       const balanceAfterUnlock = await exa.balanceOf(addr1.address);
       expect(balanceAfterUnlock).to.equal(transferAmount);
       
-      // 해제 후 락업 상태 확인
+      // Check lockup state after unlocking
       const lockStateAfter = await exa.showLockState(addr1.address, 0);
       
-      // 검증
-      expect(lockStateAfter[0]).to.be.false; // 락업이 해제되었으므로 false여야 함
+      // Verify
+      expect(lockStateAfter[0]).to.be.false; // Should be false since the lockup is released
     });
   });
-}); 
+});
