@@ -30,18 +30,6 @@ EXAToken is an ERC20-compatible token based on the OpenZeppelin library. This pr
 npm install
 ```
 
-### Running Tests
-
-```shell
-npx hardhat test
-```
-
-### Running Specific Tests
-
-```shell
-npx hardhat test test/FreezeQueryTest.ts
-```
-
 
 ## License
 
