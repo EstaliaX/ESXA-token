@@ -10,7 +10,7 @@ interface TokenRecipient {
     function receiveApproval(address _from, uint256 _value, address _token, bytes calldata _extraData) external;
 }
 
-contract EXAToken is IERC20, Ownable, Pausable {
+contract ESXAToken is IERC20, Ownable, Pausable {
     struct LockupInfo {
         uint256 releaseTime;
         uint256 termOfRound;
@@ -40,8 +40,8 @@ contract EXAToken is IERC20, Ownable, Pausable {
     }
 
     constructor() Ownable(msg.sender) {
-        name = "EstateX Protocol";
-        symbol = "EXA";
+        name = "EstaliaX";
+        symbol = "ESXA";
         initialSupply = 1*(10**9);
         totalSupply_ = initialSupply * 10 ** uint(decimals);
         balances[msg.sender] = totalSupply_;
