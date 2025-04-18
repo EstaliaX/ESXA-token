@@ -1,6 +1,6 @@
-# EstateX Protocol EXA Token
+# EstaliX ESXA Token
 
-EXAToken is an ERC20-compatible token based on the OpenZeppelin library. This project includes token lockup, account freezing, and token burning functionalities.
+ESXAToken is an ERC20-compatible token based on the OpenZeppelin library. This project includes token lockup, account freezing, and token burning functionalities.
 
 ## Key Features
 
