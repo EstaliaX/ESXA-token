@@ -1,4 +1,4 @@
-# EstaliX ESXA Token
+# EstaliaX ESXA Token
 
 ESXAToken is an ERC20-compatible token based on the OpenZeppelin library. This project includes token lockup, account freezing, and token burning functionalities.
 
